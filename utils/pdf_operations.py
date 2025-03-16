@@ -13,7 +13,9 @@ def save_bill_to_pdf(bill_content, bill_number, bills_directory=None, customer_n
     """Save bill content to a PDF file."""
     # Use the provided directory or default to the original path
     if bills_directory is None:
-        bills_directory = "d:\\adv billing\\bills"
+        # For cloud deployment, use a temporary directory instead of a fixed path
+        import tempfile
+        bills_directory = os.path.join(tempfile.gettempdir(), "grocery_billing_bills")
     
     # Ensure the directory exists
     os.makedirs(bills_directory, exist_ok=True)
