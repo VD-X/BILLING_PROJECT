@@ -38,6 +38,12 @@ st.set_page_config(
 # Apply custom styling
 set_page_style()
 
+# Run setup on startup
+if 'setup_done' not in st.session_state:
+    from setup import generate_sample_data
+    generate_sample_data()
+    st.session_state.setup_done = True
+
 # Initialize session state
 if "billnumber" not in st.session_state:
     st.session_state.billnumber = generate_bill_number()
