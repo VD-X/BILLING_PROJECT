@@ -94,81 +94,55 @@ def generate_bill(customer_name, phone_number, bill_number, cosmetic_items, groc
     
     return "\n".join(bill)
 
-def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_items, grocery_items, drink_items, totals, prices):
-    """Save the bill to a text file and PDF."""
+# Update the save_bill function to accept a bills_directory parameter
+def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_items, grocery_items, drink_items, totals, prices, bills_directory=None):
+    """Save bill to a text file and PDF"""
     try:
-        # Create bills directory if it doesn't exist
-        bill_directory = "d:\\adv billing\\bills"
-        os.makedirs(bill_directory, exist_ok=True)
+        # Use the provided directory or default to the original path
+        if bills_directory is None:
+            bills_directory = "d:\\adv billing\\bills"
+        
+        # Ensure the directory exists
+        os.makedirs(bills_directory, exist_ok=True)
         
         # Save as text file
-        bill_file = os.path.join(bill_directory, f"{bill_number}.txt")
-        with open(bill_file, "w", encoding="utf-8") as f:
+        txt_path = os.path.join(bills_directory, f"{bill_number}.txt")
+        with open(txt_path, "w") as f:
             f.write(bill_content)
         
         # Save as PDF
-        pdf_file = os.path.join(bill_directory, f"{bill_number}.pdf")
+        from utils.pdf_operations import save_bill_to_pdf
+        save_bill_to_pdf(bill_content, bill_number, bills_directory)
         
-        # Create PDF
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=10)
-        
-        # Add each line with proper encoding handling
-        for line in bill_content.split('\n'):
-            try:
-                # Try to add the line directly with encoding conversion
-                safe_line = line.encode('latin-1', 'replace').decode('latin-1')
-                pdf.cell(0, 5, txt=safe_line, ln=1)
-            except Exception:
-                # If that fails, replace any problematic characters
-                safe_line = ''.join(c if ord(c) < 128 else '?' for c in line)
-                pdf.cell(0, 5, txt=safe_line, ln=1)
-        
-        # Save the PDF
-        pdf.output(pdf_file)
-        
-        return f"Bill saved as {pdf_file}"
+        return f"Bill saved successfully as {txt_path}"
     except Exception as e:
         return f"Error saving bill: {str(e)}"
 
-def print_bill(bill_content):
-    """Print the bill to the default printer."""
+# Update the export_bill_to_excel function similarly
+def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_items, grocery_items, drink_items, totals, prices, bills_directory=None):
+    """Export bill to Excel file"""
     try:
-        # Create a temporary file
-        temp_file = os.path.join(os.environ['TEMP'], "temp_bill.txt")
-        with open(temp_file, "w", encoding="utf-8") as f:
-            f.write(bill_content)
+        # Use the provided directory or default to the original path
+        if bills_directory is None:
+            bills_directory = "d:\\adv billing\\bills"
         
-        # Get the default printer
-        printer_name = win32print.GetDefaultPrinter()
+        # Ensure the directory exists
+        os.makedirs(bills_directory, exist_ok=True)
         
-        if not printer_name:
-            return "Error: No default printer found."
+        # Create Excel file path
+        excel_path = os.path.join(bills_directory, f"{bill_number}.xlsx")
         
-        # Print the file
-        try:
-            win32api.ShellExecute(
-                0, 
-                "print", 
-                temp_file,
-                f"/d:{printer_name}", 
-                ".", 
-                0
-            )
-            return f"Bill sent to printer: {printer_name}"
-        except Exception as e:
-            return f"Error printing: {str(e)}"
-    except ImportError:
-        return "Printing is only available on Windows systems."
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_items, grocery_items, drink_items, totals, prices):
-    """Export the bill to an Excel file."""
-    try:
+        # Get the bills directory from session state or use a default
+        import streamlit as st
+        import tempfile  # Add this import
+        bills_directory = getattr(st.session_state, 'bills_directory', os.path.join(tempfile.gettempdir(), "grocery_billing_bills"))
+        os.makedirs(bills_directory, exist_ok=True)
+        
+        # Create the Excel file path
+        file_path = os.path.join(bills_directory, f"{bill_number}.xlsx")
+        
         # Create excel_bills directory if it doesn't exist
-        excel_directory = "d:\\adv billing\\excel_bills"
+        excel_directory = os.path.join(bills_directory, "excel_bills")
         os.makedirs(excel_directory, exist_ok=True)
         
         # Individual bill Excel file
@@ -334,3 +308,49 @@ def send_bill_pdf_to_customer(customer_email, bill_number, pdf_path=None):
         return f"Bill PDF successfully sent to {customer_email}"
     except Exception as e:
         return f"Error sending bill PDF: {str(e)}"
+
+
+# Add this function after the export_bill_to_excel function
+
+def print_bill(bill_content):
+    """Print the bill to the default printer."""
+    try:
+        # Check if running on Windows
+        import platform
+        if platform.system() != "Windows":
+            return "Printing is only available on Windows systems"
+        
+        # Create a temporary file for printing
+        import tempfile
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w")
+        temp_file.write(bill_content)
+        temp_file.close()
+        
+        # Get the default printer
+        printer_name = win32print.GetDefaultPrinter()
+        
+        # Print the file
+        win32api.ShellExecute(
+            0, 
+            "print", 
+            temp_file.name, 
+            f'/d:"{printer_name}"', 
+            ".", 
+            0
+        )
+        
+        # Clean up the temporary file (after a delay to allow printing)
+        import threading
+        def delete_temp_file():
+            import time
+            time.sleep(10)  # Wait 10 seconds before deleting
+            try:
+                os.unlink(temp_file.name)
+            except:
+                pass
+        
+        threading.Thread(target=delete_temp_file).start()
+        
+        return f"Bill sent to printer: {printer_name}"
+    except Exception as e:
+        return f"Error printing bill: {str(e)}"

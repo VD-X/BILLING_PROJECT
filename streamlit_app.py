@@ -3,6 +3,8 @@ import pandas as pd
 import os
 from datetime import datetime
 import sys
+import tempfile
+from pathlib import Path
 
 # Add the parent directory to the Python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -87,6 +89,7 @@ with bill_op_cols[0]:
             display_success_message("Bill calculated successfully!")
 
 # Add the rest of your bill operation buttons (Save, Print, Email, Export)
+# Save Bill button
 with bill_op_cols[1]:
     if st.button("Save Bill", key="save_button"):
         if "bill_content" in st.session_state:
@@ -99,7 +102,8 @@ with bill_op_cols[1]:
                 grocery_items,
                 drink_items,
                 st.session_state.totals,
-                prices
+                prices,
+                bills_directory=st.session_state.bills_directory  # Pass the directory
             )
             display_success_message(result)
         else:
@@ -133,7 +137,8 @@ with st.container():
                 grocery_items,
                 drink_items,
                 st.session_state.totals,
-                prices
+                prices,
+                bills_directory=st.session_state.bills_directory  # Pass the directory
             )
             display_success_message(f"Bill exported to {file_path}")
         else:
@@ -156,17 +161,18 @@ if "show_email_form" in st.session_state and st.session_state.show_email_form:
         if st.button("Send Email", key="send_email_button"):
             if security_code and receiver_email:
                 try:
-                    # Path to the PDF bill
-                    pdf_path = f"d:\\adv billing\\bills\\{st.session_state.billnumber}.pdf"
+                    # Path to the PDF bill - UPDATED
+                    pdf_path = os.path.join(st.session_state.bills_directory, f"{st.session_state.billnumber}.pdf")
                     
                     # Check if PDF exists
                     if not os.path.exists(pdf_path):
                         # Try to save the bill to PDF first if it doesn't exist
                         save_bill_to_pdf(
                             st.session_state.bill_content,
-                            st.session_state.billnumber
+                            st.session_state.billnumber,
+                            bills_directory=st.session_state.bills_directory  # Pass the directory
                         )
-                        
+                    
                     # Check again if PDF exists after trying to save
                     if os.path.exists(pdf_path):
                         # Email content
@@ -251,6 +257,11 @@ with st.sidebar.expander("Email Setup"):
 # Add this to your imports section
 from utils.bill_operations import send_bill_pdf_to_customer
 
+# Add these imports at the top
+import tempfile
+import platform
+from pathlib import Path
+
 # Add this function to your Streamlit app
 def email_bill_section():
     st.header("Email Bill to Customer")
@@ -268,8 +279,8 @@ def email_bill_section():
             # Update the function to use security code
             from utils.email_utils import send_bill_pdf_with_security_code
             
-            # Path to the PDF bill
-            pdf_path = f"d:\\adv billing\\bills\\{bill_number}.pdf"
+            # Path to the PDF bill - UPDATED
+            pdf_path = os.path.join(st.session_state.bills_directory, f"{bill_number}.pdf")
             
             # Check if PDF exists
             if not os.path.exists(pdf_path):
@@ -303,3 +314,32 @@ Grocery Billing System
                     st.success(result)
                 else:
                     st.error(result)
+
+# Add this near the top of your file, after imports
+import tempfile
+from pathlib import Path
+
+# Define a function to get the appropriate bills directory
+def get_bills_directory():
+    """Returns the appropriate directory for storing bills based on environment"""
+    # Check if we're running on Streamlit Cloud or similar service
+    if os.environ.get('STREAMLIT_SHARING') or os.environ.get('STREAMLIT_CLOUD'):
+        # Use a temporary directory for cloud deployment
+        bills_dir = Path(tempfile.gettempdir()) / "grocery_billing_bills"
+    else:
+        # For local development
+        # Try to use the original path if it exists
+        original_path = Path("d:/adv billing/bills")
+        if original_path.exists():
+            bills_dir = original_path
+        else:
+            # Create a bills directory in the current project
+            bills_dir = Path(__file__).parent / "bills"
+    
+    # Ensure the directory exists
+    os.makedirs(str(bills_dir), exist_ok=True)
+    return str(bills_dir)
+
+# Initialize the bills directory
+BILLS_DIRECTORY = get_bills_directory()
+st.session_state.bills_directory = BILLS_DIRECTORY
