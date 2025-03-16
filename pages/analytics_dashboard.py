@@ -85,7 +85,9 @@ def load_data():
     """Load data from MongoDB"""
     try:
         # Use environment variables for sensitive information
-        mongo_uri = os.getenv("MONGO_URI", "mongodb+srv://<username>:<password>@cluster0.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+        mongo_uri = os.getenv("MONGO_URI")
+        if not mongo_uri:
+            raise ValueError("MONGO_URI environment variable not set")
         
         # Connect to MongoDB
         client = MongoClient(mongo_uri)
