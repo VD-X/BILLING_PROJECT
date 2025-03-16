@@ -280,17 +280,24 @@ def send_bill_pdf_to_customer(customer_email, bill_number, pdf_path=None):
     try:
         # Construct PDF path if not provided
         if pdf_path is None:
-            pdf_path = os.path.join("d:\\adv billing\\bills", f"{bill_number}.pdf")
+            # Use temporary directory for cloud deployment
+            import tempfile
+            import streamlit as st
+            bills_directory = getattr(st.session_state, 'bills_directory', 
+                                     os.path.join(tempfile.gettempdir(), "grocery_billing_bills"))
+            pdf_path = os.path.join(bills_directory, f"{bill_number}.pdf")
         
         # Check if PDF exists
         if not os.path.exists(pdf_path):
             return f"Error: PDF file not found at {pdf_path}"
         
-        # Get email credentials from environment or configuration
-        # For security, you should use environment variables or a secure configuration
-        # This is a placeholder - replace with your actual email configuration
-        sender_email = "your_email@gmail.com"  # Replace with your email
-        sender_password = "your_app_password"  # Replace with your app password
+        # Get email credentials from Streamlit secrets
+        try:
+            import streamlit as st
+            sender_email = st.secrets["email"]["sender_email"]
+            sender_password = st.secrets["email"]["sender_password"]
+        except Exception as e:
+            return f"Error: Email credentials not found in Streamlit secrets. Please configure them."
         
         # Create message
         msg = MIMEMultipart()
