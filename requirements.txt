@@ -10,6 +10,7 @@ xlrd>=2.0.1
 # PDF generation and handling
 reportlab>=3.6.12
 PyPDF2>=3.0.1
+fpdf>=1.7.2  # Added for PDF generation
 
 # Email functionality
 python-dotenv>=1.0.0  # Note: This appears twice in your file
