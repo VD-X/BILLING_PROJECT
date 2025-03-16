@@ -24,9 +24,15 @@ def extract_bill_number_from_filename(filename):
     except Exception:
         return None
 
+def get_bills_folder():
+    """Get the bills folder path, creating it if it doesn't exist"""
+    bills_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "bills")
+    os.makedirs(bills_folder, exist_ok=True)
+    return bills_folder
+
 def get_bill_files():
     """Get list of bill files in the bills folder with metadata"""
-    bills_folder = "d:\\adv billing\\bills"
+    bills_folder = get_bills_folder()
     
     if not os.path.exists(bills_folder):
         st.error("Bills folder not found.")
@@ -76,88 +82,39 @@ def get_bill_files():
     return bill_files
 
 def display_pdf(pdf_path):
-    """Display PDF file in Streamlit with enhanced UI"""
+    """Display PDF file in Streamlit with enhanced error handling"""
     try:
+        if not os.path.exists(pdf_path):
+            st.error(f"PDF file not found: {pdf_path}")
+            return
+
         with open(pdf_path, "rb") as file:
             base64_pdf = base64.b64encode(file.read()).decode('utf-8')
         
-        # Add a professional header for the PDF viewer
-        st.markdown("""
-        <div style="background: linear-gradient(90deg, #2e7d32 0%, #388e3c 100%); padding: 15px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
-            <h3 style="color: white; margin: 0; text-align: center; font-size: 18px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" style="vertical-align: middle; margin-right: 10px;" viewBox="0 0 16 16">
-                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V9H3V2a1 1 0 0 1 1-1h5.5v2z"/>
-                    <path d="M3 12v-2h2v2H3zm0 1h2v2H4a1 1 0 0 1-1-1v-1zm3 2v-2h7v1a1 1 0 0 1-1 1H6zm7-3H6v-2h7v2z"/>
-                </svg>
-                INVOICE DOCUMENT VIEWER
-            </h3>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Embed PDF viewer with improved styling
+        # PDF viewer HTML with content-disposition to force download
         pdf_display = f"""
-        <div style="border: 1px solid #ddd; border-radius: 0 0 10px 10px; padding: 0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <iframe src="data:application/pdf;base64,{base64_pdf}" 
-                    width="100%" 
-                    height="800" 
-                    type="application/pdf"
-                    style="border: none;">
-            </iframe>
-        </div>
+        <iframe
+            src="data:application/pdf;base64,{base64_pdf}#toolbar=1&navpanes=1&scrollbar=1"
+            width="100%"
+            height="800"
+            type="application/pdf"
+            style="border: 1px solid #ddd; border-radius: 5px;">
+        </iframe>
         """
         st.markdown(pdf_display, unsafe_allow_html=True)
         
-        # Add spacing
-        st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
-        
-        # Action buttons with improved styling
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            # Download button
-            with open(pdf_path, "rb") as file:
-                st.download_button(
-                    label="📥 Download PDF",
-                    data=file,
-                    file_name=os.path.basename(pdf_path),
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-        
-        with col2:
-            # Print button with improved styling
-            st.button("🖨️ Print Invoice", on_click=lambda: None, use_container_width=True)
-        
-        with col3:
-            # Extract text button
-            if st.button("📄 Extract Text", use_container_width=True):
-                try:
-                    with fitz.open(pdf_path) as doc:
-                        text = ""
-                        for page in doc:
-                            text += page.get_text()
-                        
-                        # Display extracted text in a nicer format
-                        st.markdown("""
-                        <div style="background-color: #f8f9fa; border-left: 4px solid #2e7d32; padding: 15px; margin-top: 20px; border-radius: 4px;">
-                            <p style="margin: 0; color: #1b5e20;"><strong>Extracted Text Content:</strong></p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        st.text_area("", text, height=400)
-                except Exception as e:
-                    st.error(f"Error extracting text: {str(e)}")
-        
-        # Add additional information section
-        st.markdown("""
-        <div style="background-color: #e8f5e9; border-left: 4px solid #2e7d32; padding: 15px; margin-top: 30px; border-radius: 4px;">
-            <p style="margin: 0; color: #1b5e20;"><strong>Note:</strong> This is a digital version of your invoice. 
-            You can download, print, or extract text from this document using the buttons above.</p>
-        </div>
-        """, unsafe_allow_html=True)
-                    
+        # Add download button
+        with open(pdf_path, "rb") as pdf_file:
+            st.download_button(
+                "📥 Download PDF",
+                pdf_file,
+                file_name=os.path.basename(pdf_path),
+                mime="application/pdf"
+            )
+    
     except Exception as e:
         st.error(f"Error displaying PDF: {str(e)}")
+        st.info("Try downloading the file instead.")
 
 def search_bills(bills, search_term, date_range, amount_range, customer_name):
     """Search bills based on various criteria"""
