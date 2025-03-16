@@ -33,3 +33,6 @@ pdfplumber>=0.7.0  # For PDF text extraction
 secure-smtplib>=0.1.1  # Enhanced SMTP library for email
 altair>=4.2.0  # For interactive visualizations in Streamlit
 streamlit-aggrid>=0.3.3  # For enhanced data tables (useful for search functionality)
+
+# Add Plotly for analytics dashboard
+plotly>=5.10.0
