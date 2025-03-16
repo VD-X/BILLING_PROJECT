@@ -366,7 +366,7 @@ def create_weekday_bar_chart(df):
         yaxis=dict(
             title_font=dict(size=14),
             tickfont=dict(size=12),
-            gridcolor='rgba(211, 211, 211, 0.3)
+            gridcolor='rgba(211, 211, 211, 0.3)'  # Fixed missing quote
         )
     )
     
