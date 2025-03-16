@@ -3,12 +3,33 @@ import datetime
 import random
 import pandas as pd
 from fpdf import FPDF
-import win32print
-import win32api
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+import platform
+
+# Conditionally import Windows-specific modules
+if platform.system() == "Windows":
+    try:
+        import win32print
+        import win32api
+    except ImportError:
+        pass
+else:
+    # Create dummy modules for non-Windows environments
+    class DummyWin32Print:
+        @staticmethod
+        def GetDefaultPrinter():
+            return "No printer available (non-Windows environment)"
+    
+    class DummyWin32Api:
+        @staticmethod
+        def ShellExecute(*args, **kwargs):
+            pass
+    
+    win32print = DummyWin32Print()
+    win32api = DummyWin32Api()
 
 def generate_bill_number():
     """Generate a unique bill number based on date and random number."""
@@ -309,31 +330,6 @@ def send_bill_pdf_to_customer(customer_email, bill_number, pdf_path=None):
     except Exception as e:
         return f"Error sending bill PDF: {str(e)}"
 
-
-# Add this function after the export_bill_to_excel function
-
-# Conditionally import Windows-specific modules
-import platform
-if platform.system() == "Windows":
-    try:
-        import win32print
-        import win32api
-    except ImportError:
-        pass
-else:
-    # Create dummy modules for non-Windows environments
-    class DummyWin32Print:
-        @staticmethod
-        def GetDefaultPrinter():
-            return "No printer available (non-Windows environment)"
-    
-    class DummyWin32Api:
-        @staticmethod
-        def ShellExecute(*args, **kwargs):
-            pass
-    
-    win32print = DummyWin32Print()
-    win32api = DummyWin32Api()
 
 def print_bill(bill_content):
     """Print the bill to the default printer."""
