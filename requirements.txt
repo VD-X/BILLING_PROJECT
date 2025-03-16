@@ -11,3 +11,5 @@ pillow==10.1.0
 openpyxl==3.1.2
 xlsxwriter==3.1.9
 pywin32==306; platform_system == "Windows"
+scikit-learn==1.4.0
+pymupdf==1.23.8
