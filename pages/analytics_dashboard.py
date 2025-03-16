@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import calendar
 import numpy as np
 from sklearn.linear_model import LinearRegression
-import requests
+from pymongo import MongoClient
 
 # Set page config
 st.set_page_config(
@@ -82,18 +82,23 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def load_data():
-    """Load data from the backend API"""
-    api_url = "http://your-backend-api-url.com/api/bills"
-    
+    """Load data from MongoDB"""
     try:
-        response = requests.get(api_url)
-        response.raise_for_status()  # Raise an error for bad responses
-        data = response.json()
+        # Use environment variables for sensitive information
+        mongo_uri = os.getenv("MONGO_URI", "mongodb+srv://<username>:<password>@cluster0.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
         
-        # Convert JSON data to DataFrame
+        # Connect to MongoDB
+        client = MongoClient(mongo_uri)
+        db = client['your_database_name']
+        collection = db['your_collection_name']
+        
+        # Fetch data from MongoDB
+        data = list(collection.find())
+        
+        # Convert to DataFrame
         df = pd.DataFrame(data)
         
-        # Convert Date column to datetime if it's not already
+        # Ensure Date column is datetime
         if 'Date' in df.columns:
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
             
@@ -103,10 +108,10 @@ def load_data():
             df['Month_Name'] = df['Date'].dt.month_name()
             df['Day'] = df['Date'].dt.day
             df['Weekday'] = df['Date'].dt.day_name()
-            
+        
         return df
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching data from backend: {str(e)}")
+    except Exception as e:
+        st.error(f"Error loading data from MongoDB: {str(e)}")
         return None
 
 def display_filters(df):
