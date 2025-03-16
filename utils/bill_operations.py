@@ -3,6 +3,8 @@ import datetime
 import random
 import pandas as pd
 from fpdf import FPDF
+import win32print
+import win32api
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -130,36 +132,37 @@ def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_i
     except Exception as e:
         return f"Error saving bill: {str(e)}"
 
-def print_bill(pdf_path):
-    """
-    Print the bill PDF using platform-specific methods.
-    Falls back to opening the PDF if direct printing is not available.
-    
-    Args:
-        pdf_path (str): Path to the PDF file to print
-    """
+def print_bill(bill_content):
+    """Print the bill to the default printer."""
     try:
-        if os.name == 'nt':  # Windows
-            try:
-                # Import Windows-specific modules only when needed
-                from win32printing import Printer
-                with Printer() as printer:
-                    printer.print_file(pdf_path)
-                return "Bill sent to printer"
-            except ImportError:
-                # If win32printing is not available, try to open the PDF
-                os.startfile(pdf_path)
-                return "PDF opened for viewing (printing not available)"
-        else:  # Linux/Mac
-            if os.system('which lpr > /dev/null 2>&1') == 0:
-                os.system(f'lpr "{pdf_path}"')
-                return "Bill sent to default printer"
-            else:
-                # Try to open with default PDF viewer
-                os.system(f'xdg-open "{pdf_path}"')
-                return "PDF opened for viewing (printing not available)"
+        # Create a temporary file
+        temp_file = os.path.join(os.environ['TEMP'], "temp_bill.txt")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            f.write(bill_content)
+        
+        # Get the default printer
+        printer_name = win32print.GetDefaultPrinter()
+        
+        if not printer_name:
+            return "Error: No default printer found."
+        
+        # Print the file
+        try:
+            win32api.ShellExecute(
+                0, 
+                "print", 
+                temp_file,
+                f"/d:{printer_name}", 
+                ".", 
+                0
+            )
+            return f"Bill sent to printer: {printer_name}"
+        except Exception as e:
+            return f"Error printing: {str(e)}"
+    except ImportError:
+        return "Printing is only available on Windows systems."
     except Exception as e:
-        return f"Error printing bill: {str(e)}"
+        return f"Error: {str(e)}"
 
 def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_items, grocery_items, drink_items, totals, prices):
     """Export the bill to an Excel file."""

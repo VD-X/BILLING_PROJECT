@@ -1,0 +1,79 @@
+[1mdiff --git a/utils/bill_operations.py b/utils/bill_operations.py[m
+[1mindex 3a55d48..9423906 100644[m
+[1m--- a/utils/bill_operations.py[m
+[1m+++ b/utils/bill_operations.py[m
+[36m@@ -3,6 +3,8 @@[m [mimport datetime[m
+ import random[m
+ import pandas as pd[m
+ from fpdf import FPDF[m
+[32m+[m[32mimport win32print[m
+[32m+[m[32mimport win32api[m
+ import smtplib[m
+ from email.mime.multipart import MIMEMultipart[m
+ from email.mime.text import MIMEText[m
+[36m@@ -130,36 +132,37 @@[m [mdef save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_i[m
+     except Exception as e:[m
+         return f"Error saving bill: {str(e)}"[m
+ [m
+[31m-def print_bill(pdf_path):[m
+[31m-    """[m
+[31m-    Print the bill PDF using platform-specific methods.[m
+[31m-    Falls back to opening the PDF if direct printing is not available.[m
+[31m-    [m
+[31m-    Args:[m
+[31m-        pdf_path (str): Path to the PDF file to print[m
+[31m-    """[m
+[32m+[m[32mdef print_bill(bill_content):[m
+[32m+[m[32m    """Print the bill to the default printer."""[m
+     try:[m
+[31m-        if os.name == 'nt':  # Windows[m
+[31m-            try:[m
+[31m-                # Import Windows-specific modules only when needed[m
+[31m-                from win32printing import Printer[m
+[31m-                with Printer() as printer:[m
+[31m-                    printer.print_file(pdf_path)[m
+[31m-                return "Bill sent to printer"[m
+[31m-            except ImportError:[m
+[31m-                # If win32printing is not available, try to open the PDF[m
+[31m-                os.startfile(pdf_path)[m
+[31m-                return "PDF opened for viewing (printing not available)"[m
+[31m-        else:  # Linux/Mac[m
+[31m-            if os.system('which lpr > /dev/null 2>&1') == 0:[m
+[31m-                os.system(f'lpr "{pdf_path}"')[m
+[31m-                return "Bill sent to default printer"[m
+[31m-            else:[m
+[31m-                # Try to open with default PDF viewer[m
+[31m-                os.system(f'xdg-open "{pdf_path}"')[m
+[31m-                return "PDF opened for viewing (printing not available)"[m
+[32m+[m[32m        # Create a temporary file[m
+[32m+[m[32m        temp_file = os.path.join(os.environ['TEMP'], "temp_bill.txt")[m
+[32m+[m[32m        with open(temp_file, "w", encoding="utf-8") as f:[m
+[32m+[m[32m            f.write(bill_content)[m
+[32m+[m[41m        [m
+[32m+[m[32m        # Get the default printer[m
+[32m+[m[32m        printer_name = win32print.GetDefaultPrinter()[m
+[32m+[m[41m        [m
+[32m+[m[32m        if not printer_name:[m
+[32m+[m[32m            return "Error: No default printer found."[m
+[32m+[m[41m        [m
+[32m+[m[32m        # Print the file[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            win32api.ShellExecute([m
+[32m+[m[32m                0,[m[41m [m
+[32m+[m[32m                "print",[m[41m [m
+[32m+[m[32m                temp_file,[m
+[32m+[m[32m                f"/d:{printer_name}",[m[41m [m
+[32m+[m[32m                ".",[m[41m [m
+[32m+[m[32m                0[m
+[32m+[m[32m            )[m
+[32m+[m[32m            return f"Bill sent to printer: {printer_name}"[m
+[32m+[m[32m        except Exception as e:[m
+[32m+[m[32m            return f"Error printing: {str(e)}"[m
+[32m+[m[32m    except ImportError:[m
+[32m+[m[32m        return "Printing is only available on Windows systems."[m
+     except Exception as e:[m
+[31m-        return f"Error printing bill: {str(e)}"[m
+[32m+[m[32m        return f"Error: {str(e)}"[m
+ [m
+ def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_items, grocery_items, drink_items, totals, prices):[m
+     """Export the bill to an Excel file."""[m
