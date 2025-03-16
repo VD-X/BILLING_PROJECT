@@ -9,6 +9,7 @@ xlsxwriter>=3.0.0,<3.2.0
 numpy>=1.26.0
 reportlab>=4.0.0,<4.1.0
 PyPDF2>=3.0.0,<3.1.0
+base64io>=1.0.3
 requests>=2.31.0,<2.32.0
 pymongo>=4.5.0,<4.6.0
 qrcode>=7.4.0,<7.5.0

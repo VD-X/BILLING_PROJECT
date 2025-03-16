@@ -8,6 +8,7 @@ from PIL import Image
 import io
 import glob
 import re
+from PyPDF2 import PdfReader
 
 def extract_bill_number_from_filename(filename):
     """Extract bill number from filename"""
