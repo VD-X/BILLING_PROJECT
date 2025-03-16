@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import calendar
 import numpy as np
 from sklearn.linear_model import LinearRegression
+import json
 
 # Set page config
 st.set_page_config(
@@ -365,7 +366,7 @@ def create_weekday_bar_chart(df):
         yaxis=dict(
             title_font=dict(size=14),
             tickfont=dict(size=12),
-            gridcolor='rgba(211, 211, 211, 0.3)'
+            gridcolor='rgba(211, 211, 211, 0.3)
         )
     )
     
@@ -979,6 +980,55 @@ def create_customer_growth_chart(df):
     )
     
     return fig
+
+def load_sales_data():
+    """Load sales data from bills folder"""
+    try:
+        bills_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "bills")
+        if not os.path.exists(bills_folder):
+            st.warning("No bills folder found. Please generate some bills first.")
+            return pd.DataFrame()
+            
+        # Create empty lists to store data
+        dates = []
+        totals = []
+        categories = []
+        items = []
+        quantities = []
+        
+        # Process all JSON files in bills folder
+        for filename in os.listdir(bills_folder):
+            if filename.endswith('.json'):
+                try:
+                    with open(os.path.join(bills_folder, filename), 'r') as f:
+                        data = json.load(f)
+                        bill_date = datetime.strptime(data['date'], '%Y-%m-%d')
+                        
+                        # Add total sales
+                        dates.append(bill_date)
+                        totals.append(float(data['total']))
+                        
+                        # Process items by category
+                        for category in ['cosmetic_items', 'grocery_items', 'drink_items']:
+                            for item, qty in data.get(category, {}).items():
+                                categories.append(category.replace('_items', ''))
+                                items.append(item)
+                                quantities.append(int(qty))
+                except Exception as e:
+                    st.error(f"Error processing {filename}: {str(e)}")
+                    continue
+        
+        # Create DataFrame
+        return pd.DataFrame({
+            'date': dates,
+            'total': totals,
+            'category': categories,
+            'item': items,
+            'quantity': quantities
+        })
+    except Exception as e:
+        st.error(f"Error loading sales data: {str(e)}")
+        return pd.DataFrame()
 
 if __name__ == "__main__":
     main()
