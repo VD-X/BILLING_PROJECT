@@ -89,7 +89,7 @@ def generate_bill(customer_name, phone_number, bill_number, cosmetic_items, groc
     return "\n".join(bill)
 
 def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_items, grocery_items, drink_items, totals, prices):
-    """Save bill to a text file"""
+    """Save bill to a text file and database"""
     # Create bills directory if it doesn't exist
     bills_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "bills")
     os.makedirs(bills_dir, exist_ok=True)
@@ -99,7 +99,52 @@ def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_i
     with open(file_path, "w") as f:
         f.write(bill_content)
     
-    return f"Bill saved to {file_path}"
+    # Save bill to database
+    try:
+        from db_service import DatabaseService
+        from config import init_config
+        
+        # Initialize database service
+        config = init_config()
+        db_service = DatabaseService(config)
+        
+        # Create bill data for database
+        bill_data = {
+            "bill_number": bill_number,
+            "customer_name": customer_name,
+            "phone_number": phone_number,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "items": [],
+            "subtotal": totals["subtotal"],
+            "tax": totals["tax"],
+            "total": totals["total"],
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        # Add items to bill data
+        for category, items in [
+            ("Cosmetics", cosmetic_items), 
+            ("Grocery", grocery_items), 
+            ("Drinks", drink_items)
+        ]:
+            for item, qty in items.items():
+                if qty > 0:
+                    price = prices.get(item, 0)
+                    total = qty * price
+                    bill_data["items"].append({
+                        "category": category,
+                        "item_name": item,
+                        "quantity": qty,
+                        "price": price,
+                        "total": total
+                    })
+        
+        # Save to database
+        db_service.save_data("sales", bill_data)
+        return f"Bill saved to {file_path} and database"
+    except Exception as e:
+        print(f"Error saving to database: {str(e)}")
+        return f"Bill saved to {file_path} (database save failed)"
 
 def print_bill(bill_content):
     """Print bill to default printer"""
