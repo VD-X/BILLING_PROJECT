@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 import calendar
 import numpy as np
 from sklearn.linear_model import LinearRegression
-from pymongo import MongoClient
 
 # Set page config
 st.set_page_config(
@@ -82,25 +81,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def load_data():
-    """Load data from MongoDB"""
+    """Load data from the excel_bills.xlsx file"""
+    excel_file = "d:\\adv billing\\main excel bill\\excel_bills.xlsx"
+    
+    if not os.path.exists(excel_file):
+        st.error("Excel file not found. Please generate some bills first.")
+        return None
+    
     try:
-        # Use environment variables for sensitive information
-        mongo_uri = os.getenv("MONGO_URI")
-        if not mongo_uri:
-            raise ValueError("MONGO_URI environment variable not set")
+        df = pd.read_excel(excel_file)
         
-        # Connect to MongoDB
-        client = MongoClient(mongo_uri)
-        db = client['your_database_name']
-        collection = db['your_collection_name']
-        
-        # Fetch data from MongoDB
-        data = list(collection.find())
-        
-        # Convert to DataFrame
-        df = pd.DataFrame(data)
-        
-        # Ensure Date column is datetime
+        # Convert Date column to datetime if it's not already
         if 'Date' in df.columns:
             df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
             
@@ -110,10 +101,10 @@ def load_data():
             df['Month_Name'] = df['Date'].dt.month_name()
             df['Day'] = df['Date'].dt.day
             df['Weekday'] = df['Date'].dt.day_name()
-        
+            
         return df
     except Exception as e:
-        st.error(f"Error loading data from MongoDB: {str(e)}")
+        st.error(f"Error loading data: {str(e)}")
         return None
 
 def display_filters(df):

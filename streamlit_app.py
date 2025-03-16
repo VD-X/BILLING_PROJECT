@@ -7,37 +7,26 @@ import sys
 # Add the parent directory to the Python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# Make sure the utils directory exists
-utils_dir = os.path.join(os.path.dirname(__file__), 'utils')
-if not os.path.exists(utils_dir):
-    os.makedirs(utils_dir)
-
-# Import functions or provide fallbacks if modules don't exist
-try:
-    from utils.bill_operations import (
-        generate_bill_number, 
-        calculate_total, 
-        generate_bill, 
-        save_bill, 
-        print_bill, 
-        export_bill_to_excel
-    )
-    from utils.pdf_operations import extract_pdf_text, save_bill_to_pdf
-    from utils.email_utils import send_email
-    from utils.data import prices, cosmetic_products, grocery_products, drink_products
-    from utils.ui import (
-        set_page_style,
-        display_customer_info_section,
-        display_product_selection,
-        display_bill_operations_section,
-        display_bill_content,
-        display_success_message,
-        display_error_message
-    )
-except ImportError as e:
-    st.error(f"Error importing modules: {str(e)}")
-    st.error("Please make sure all required modules are installed and the utils directory is set up correctly.")
-    st.stop()
+from utils.bill_operations import (
+    generate_bill_number, 
+    calculate_total, 
+    generate_bill, 
+    save_bill, 
+    print_bill, 
+    export_bill_to_excel
+)
+from utils.pdf_operations import extract_pdf_text, save_bill_to_pdf
+from utils.email_utils import send_email
+from utils.data import prices, cosmetic_products, grocery_products, drink_products
+from utils.ui import (
+    set_page_style,
+    display_customer_info_section,
+    display_product_selection,
+    display_bill_operations_section,
+    display_bill_content,
+    display_success_message,
+    display_error_message
+)
 
 # Set page config
 st.set_page_config(
@@ -48,12 +37,6 @@ st.set_page_config(
 
 # Apply custom styling
 set_page_style()
-
-# Run setup on startup
-if 'setup_done' not in st.session_state:
-    from setup import generate_sample_data
-    generate_sample_data()
-    st.session_state.setup_done = True
 
 # Initialize session state
 if "billnumber" not in st.session_state:
@@ -264,17 +247,21 @@ with st.sidebar.expander("Email Setup"):
         else:
             st.warning("Please fill in all fields.")
 
-# Fix the datetime reference in the email_bill_section function
+
+# Add this to your imports section
+from utils.bill_operations import send_bill_pdf_to_customer
+
+# Add this function to your Streamlit app
 def email_bill_section():
     st.header("Email Bill to Customer")
     
     # Input fields
-    bill_number = st.text_input("Bill Number", key="email_bill_number")
-    customer_email = st.text_input("Customer Email", key="email_customer_email")
-    customer_name = st.text_input("Customer Name", key="email_customer_name")
-    security_code = st.text_input("Security Code", type="password", key="email_security_code")
+    bill_number = st.text_input("Bill Number")
+    customer_email = st.text_input("Customer Email")
+    customer_name = st.text_input("Customer Name")
+    security_code = st.text_input("Security Code", type="password")
     
-    if st.button("Send Bill", key="send_saved_bill"):
+    if st.button("Send Bill"):
         if not bill_number or not customer_email or not customer_name or not security_code:
             st.error("Please fill in all fields")
         else:
@@ -295,7 +282,7 @@ def email_bill_section():
 Thank you for your purchase. Please find your invoice attached to this email.
 
 Invoice Number: {bill_number}
-Date: {datetime.now().strftime("%d-%m-%Y")}
+Date: {datetime.datetime.now().strftime("%d-%m-%Y")}
 
 If you have any questions about this invoice, please contact our customer service.
 
@@ -316,8 +303,3 @@ Grocery Billing System
                     st.success(result)
                 else:
                     st.error(result)
-
-# Add this to call the email_bill_section function
-st.sidebar.markdown("---")
-with st.sidebar.expander("Email Saved Bill"):
-    email_bill_section()
