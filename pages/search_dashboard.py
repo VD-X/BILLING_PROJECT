@@ -77,9 +77,6 @@ def get_bill_files():
 def display_pdf(pdf_path):
     """Display PDF file in Streamlit with enhanced UI"""
     try:
-        with open(pdf_path, "rb") as file:
-            base64_pdf = base64.b64encode(file.read()).decode('utf-8')
-        
         # Add a professional header for the PDF viewer
         st.markdown("""
         <div style="background: linear-gradient(90deg, #2e7d32 0%, #388e3c 100%); padding: 15px; border-radius: 10px 10px 0 0; margin-bottom: 0;">
@@ -93,18 +90,21 @@ def display_pdf(pdf_path):
         </div>
         """, unsafe_allow_html=True)
         
-        # Embed PDF viewer with improved styling
-        pdf_display = f"""
-        <div style="border: 1px solid #ddd; border-radius: 0 0 10px 10px; padding: 0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <iframe src="data:application/pdf;base64,{base64_pdf}" 
-                    width="100%" 
-                    height="800" 
-                    type="application/pdf"
-                    style="border: none;">
-            </iframe>
-        </div>
-        """
-        st.markdown(pdf_display, unsafe_allow_html=True)
+        # Use Streamlit's built-in PDF display capability
+        with open(pdf_path, "rb") as file:
+            pdf_bytes = file.read()
+        
+        # Display PDF using Streamlit's PDF display
+        st.download_button(
+            label="📥 Download PDF",
+            data=pdf_bytes,
+            file_name=os.path.basename(pdf_path),
+            mime="application/pdf",
+        )
+        
+        # Display PDF directly using Streamlit
+        st.write("### PDF Preview")
+        st.pdf(pdf_bytes, width=700, height=800)
         
         # Add spacing
         st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
