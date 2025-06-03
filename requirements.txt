@@ -11,6 +11,7 @@ xlrd>=2.0.1
 reportlab>=3.6.12
 PyPDF2>=3.0.1
 fpdf>=1.7.2  # Added for PDF generation
+PyMuPDF>=1.21.1  # Provides the fitz module for PDF handling
 
 # Email functionality
 python-dotenv>=1.0.0
