@@ -90,30 +90,53 @@ def display_pdf(pdf_path):
         </div>
         """, unsafe_allow_html=True)
         
-        # Read PDF file
-        with open(pdf_path, "rb") as file:
-            pdf_bytes = base64.b64encode(file.read()).decode('utf-8')
-        
-        # Create a download button for the PDF
-        with open(pdf_path, "rb") as file:
-            st.download_button(
-                label="📥 Download PDF",
-                data=file,
-                file_name=os.path.basename(pdf_path),
-                mime="application/pdf",
-            )
-        
-        # Display PDF Preview header
-        st.write("### PDF Preview")
-        
-        # Display PDF using HTML object tag which is more compatible with browsers
-        pdf_display = f"""
-        <object data="data:application/pdf;base64,{pdf_bytes}" type="application/pdf" width="100%" height="800px">
-            <p>It appears you don't have a PDF plugin for this browser. You can 
-            <a href="data:application/pdf;base64,{pdf_bytes}">click here to download the PDF</a>.</p>
-        </object>
-        """
-        st.markdown(pdf_display, unsafe_allow_html=True)
+        # Read PDF file and create images for preview
+        try:
+            # Create a download button for the PDF
+            with open(pdf_path, "rb") as file:
+                pdf_data = file.read()
+                st.download_button(
+                    label="📥 Download PDF",
+                    data=pdf_data,
+                    file_name=os.path.basename(pdf_path),
+                    mime="application/pdf",
+                )
+            
+            # Display PDF Preview header
+            st.write("### PDF Preview")
+            
+            # Use PyMuPDF to render PDF pages as images
+            doc = fitz.open(pdf_path)
+            for page_num in range(min(3, len(doc))):  # Show first 3 pages
+                page = doc.load_page(page_num)
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Zoom factor 2
+                img_bytes = pix.tobytes()
+                img = Image.open(io.BytesIO(img_bytes)) if hasattr(pix, 'tobytes') else Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                
+                st.image(img, caption=f"Page {page_num + 1} of {len(doc)}", use_column_width=True)
+                
+                # Add a separator between pages
+                if page_num < min(2, len(doc) - 1):
+                    st.markdown("<hr style='margin: 15px 0; border: 0; border-top: 1px solid #eee;'>", unsafe_allow_html=True)
+            
+            # Show note if there are more pages
+            if len(doc) > 3:
+                st.info(f"Showing preview of first 3 pages. The complete PDF has {len(doc)} pages. Please download to view all pages.")
+                
+            doc.close()
+        except Exception as e:
+            st.error(f"Error rendering PDF preview: {str(e)}")
+            
+            # Fallback to download only if preview fails
+            st.warning("PDF preview could not be generated. Please download the PDF to view it.")
+            with open(pdf_path, "rb") as file:
+                st.download_button(
+                    label="📥 Download PDF",
+                    data=file,
+                    file_name=os.path.basename(pdf_path),
+                    mime="application/pdf",
+                    use_container_width=True
+                )
         
         # Add spacing
         st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
