@@ -5,13 +5,17 @@ from email.mime.application import MIMEApplication
 import os
 import json
 import hashlib
+import streamlit as st
 
-# Path to store encrypted credentials
-CREDENTIALS_FILE = "d:\\adv billing\\utils\\email_credentials.json"
+# We'll use Streamlit secrets for cloud deployment
+# For local development, we'll use a fallback file
+CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "email_credentials.json")
 
 def setup_email_credentials(email, password, security_code):
     """
     Set up email credentials with a security code for future use.
+    For cloud deployment, this will be handled via Streamlit secrets.
+    For local development, we'll save to a file.
     
     Args:
         email: The email address
@@ -32,10 +36,15 @@ def setup_email_credentials(email, password, security_code):
             "hashed_code": hashed_code
         }
         
-        # Save to file
+        # For local development, save to file
+        # In cloud deployment, this should be set up in Streamlit secrets
         os.makedirs(os.path.dirname(CREDENTIALS_FILE), exist_ok=True)
         with open(CREDENTIALS_FILE, 'w') as f:
             json.dump(credentials, f)
+            
+        # Display instructions for Streamlit Cloud
+        if os.environ.get('STREAMLIT_SHARING') or os.environ.get('STREAMLIT_CLOUD'):
+            st.info("For Streamlit Cloud deployment, please add these credentials to your secrets.toml file.")
         
         return True
     except Exception as e:
@@ -45,6 +54,8 @@ def setup_email_credentials(email, password, security_code):
 def verify_security_code(security_code):
     """
     Verify a security code against the stored hash.
+    For cloud deployment, checks against Streamlit secrets.
+    For local development, checks against file.
     
     Args:
         security_code: The security code to verify
@@ -53,17 +64,37 @@ def verify_security_code(security_code):
         tuple: (bool, dict) - Success status and credentials if successful
     """
     try:
+        # First check if we're in Streamlit Cloud and have secrets configured
+        if hasattr(st, 'secrets') and 'email' in st.secrets:
+            # Get the stored security code hash from secrets
+            stored_hash = st.secrets.email.get('hashed_code')
+            # If no stored hash in secrets, fall back to file
+            if stored_hash:
+                # Hash the provided code
+                hashed_code = hashlib.sha256(security_code.encode()).hexdigest()
+                
+                # Verify against secrets
+                if hashed_code == stored_hash:
+                    # Return credentials from secrets
+                    return True, {
+                        "sender_email": st.secrets.email.get('sender_email'),
+                        "sender_password": st.secrets.email.get('sender_password')
+                    }
+                else:
+                    return False, None
+        
+        # Fall back to file-based verification for local development
         if not os.path.exists(CREDENTIALS_FILE):
             return False, None
         
-        # Read credentials
+        # Read credentials from file
         with open(CREDENTIALS_FILE, 'r') as f:
             credentials = json.load(f)
         
         # Hash the provided code
         hashed_code = hashlib.sha256(security_code.encode()).hexdigest()
         
-        # Verify
+        # Verify against file
         if hashed_code == credentials.get("hashed_code"):
             return True, credentials
         else:

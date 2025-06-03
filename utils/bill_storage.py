@@ -15,7 +15,7 @@ def save_bill_to_master(bill_data, master_file_path=None):
     # Set default master file path if not provided
     if master_file_path is None:
         master_file_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
-                                        'data', 'master_bills.xlsx')
+                                        'saved_bills', 'master_bills.xlsx')
     
     # Ensure the directory exists
     os.makedirs(os.path.dirname(master_file_path), exist_ok=True)

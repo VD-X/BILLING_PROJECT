@@ -15,8 +15,8 @@ fpdf>=1.7.2  # Added for PDF generation
 # Email functionality
 python-dotenv>=1.0.0
 
-# Windows-specific dependencies (only installed on Windows systems)
-pywin32>=306; platform_system == "Windows"
+# Cloud deployment dependencies
+python-multipart>=0.0.5  # For handling file uploads in Streamlit Cloud
 
 # Image processing (for logos, etc.)
 Pillow>=9.5.0

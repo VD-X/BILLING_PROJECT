@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
+import json
+import pickle
 from datetime import datetime
 import sys
 import tempfile
@@ -19,7 +21,7 @@ from utils.bill_operations import (
 )
 from utils.pdf_operations import extract_pdf_text, save_bill_to_pdf
 from utils.email_utils import send_email
-from utils.data import prices, cosmetic_products, grocery_products, drink_products
+from utils.data import prices as default_prices, cosmetic_products as default_cosmetic_products, grocery_products as default_grocery_products, drink_products as default_drink_products
 from utils.ui import (
     set_page_style,
     display_customer_info_section,
@@ -40,9 +42,94 @@ st.set_page_config(
 # Apply custom styling
 set_page_style()
 
+# Define file paths for product data and inventory
+DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+PRODUCTS_FILE = os.path.join(DATA_DIR, "products.json")
+INVENTORY_FILE = os.path.join(DATA_DIR, "inventory.json")
+PRICES_FILE = os.path.join(DATA_DIR, "prices.pkl")
+
+# Function to load product data
+def load_product_data():
+    if os.path.exists(PRODUCTS_FILE):
+        with open(PRODUCTS_FILE, 'r') as f:
+            return json.load(f)
+    else:
+        # Initialize with existing data from utils/data.py
+        products = {
+            "Cosmetics": default_cosmetic_products,
+            "Groceries": default_grocery_products,
+            "Drinks": default_drink_products
+        }
+        with open(PRODUCTS_FILE, 'w') as f:
+            json.dump(products, f, indent=4)
+        return products
+
+# Function to load inventory data
+def load_inventory_data():
+    if os.path.exists(INVENTORY_FILE):
+        with open(INVENTORY_FILE, 'r') as f:
+            return json.load(f)
+    else:
+        # Initialize empty inventory
+        inventory = {}
+        # Add all existing products with default inventory of 10
+        products = load_product_data()
+        for category, category_products in products.items():
+            for product_type, variants in category_products.items():
+                for variant in variants:
+                    product_name = variant["name"]
+                    inventory[product_name] = {
+                        "quantity": 10,
+                        "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+        with open(INVENTORY_FILE, 'w') as f:
+            json.dump(inventory, f, indent=4)
+        return inventory
+
+# Function to load prices
+def load_prices():
+    if os.path.exists(PRICES_FILE):
+        with open(PRICES_FILE, 'rb') as f:
+            return pickle.load(f)
+    else:
+        # Use default prices
+        return default_prices
+
+# Define a function to get the appropriate bills directory
+def get_bills_directory():
+    """Returns the appropriate directory for storing bills based on environment"""
+    # Check if we're running on Streamlit Cloud or similar service
+    if os.environ.get('STREAMLIT_SHARING') or os.environ.get('STREAMLIT_CLOUD'):
+        # Use a temporary directory for cloud deployment
+        bills_dir = Path(tempfile.gettempdir()) / "grocery_billing_bills"
+    else:
+        # For local development, use the saved_bills directory in the project
+        bills_dir = Path(__file__).parent / "saved_bills"
+    
+    # Ensure the directory exists
+    os.makedirs(str(bills_dir), exist_ok=True)
+    return str(bills_dir)
+
+# Initialize the bills directory
+BILLS_DIRECTORY = get_bills_directory()
+st.session_state.bills_directory = BILLS_DIRECTORY
+
 # Initialize session state
 if "billnumber" not in st.session_state:
     st.session_state.billnumber = generate_bill_number()
+
+# Load product and inventory data
+products = load_product_data()
+cosmetic_products = products.get("Cosmetics", default_cosmetic_products)
+grocery_products = products.get("Groceries", default_grocery_products)
+drink_products = products.get("Drinks", default_drink_products)
+inventory = load_inventory_data()
+prices = load_prices()
+
+# Initialize session state for selected products from search
+if "selected_products" not in st.session_state:
+    st.session_state.selected_products = []
 
 # Title
 st.title("Grocery Billing System")
@@ -50,9 +137,37 @@ st.title("Grocery Billing System")
 # Get customer information
 customer_name, phone_number = display_customer_info_section()
 
-# Get product selections
+# Add a search bar for products
+st.sidebar.markdown('<div class="section-header">Product Search</div>', unsafe_allow_html=True)
+search_term = st.sidebar.text_input("Search for products", key="main_search")
+if st.sidebar.button("Search"):
+    if search_term:
+        st.switch_page("pages/product_management.py")
+
+# Display products from search if any were selected
+if st.session_state.selected_products:
+    st.markdown('<div class="section-header">Selected Products from Search</div>', unsafe_allow_html=True)
+    
+    # Create a DataFrame for better display
+    selected_df = pd.DataFrame([
+        {
+            "Product": item["name"],
+            "Price": f"₹{item['price']}",
+            "Quantity": item["quantity"],
+            "Total": f"₹{item['price'] * item['quantity']}"
+        }
+        for item in st.session_state.selected_products
+    ])
+    
+    st.dataframe(selected_df)
+    
+    if st.button("Clear Selected Products"):
+        st.session_state.selected_products = []
+        st.rerun()
+
+# Get product selections with inventory awareness
 cosmetic_items, grocery_items, drink_items = display_product_selection(
-    cosmetic_products, grocery_products, drink_products, prices
+    cosmetic_products, grocery_products, drink_products, prices, inventory
 )
 
 # Bill operations section
@@ -65,9 +180,19 @@ with bill_op_cols[0]:
             display_error_message("Please enter customer name")
         elif not phone_number:
             display_error_message("Please enter phone number")
-        elif not any(qty > 0 for qty in {**cosmetic_items, **grocery_items, **drink_items}.values()):
+        elif not any(qty > 0 for qty in {**cosmetic_items, **grocery_items, **drink_items}.values()) and not st.session_state.selected_products:
             display_error_message("Please select at least one product")
         else:
+            # Add products from search to appropriate categories
+            for item in st.session_state.selected_products:
+                category = item["category"]
+                if category == "Cosmetics":
+                    cosmetic_items[item["name"]] = item["quantity"]
+                elif category == "Groceries":
+                    grocery_items[item["name"]] = item["quantity"]
+                elif category == "Drinks":
+                    drink_items[item["name"]] = item["quantity"]
+            
             # Calculate totals
             totals = calculate_total(cosmetic_items, grocery_items, drink_items, prices)
             st.session_state.totals = totals
@@ -85,10 +210,23 @@ with bill_op_cols[0]:
             )
             st.session_state.bill_content = bill_content
             
+            # Update inventory after bill calculation
+            all_items = {**cosmetic_items, **grocery_items, **drink_items}
+            for product, quantity in all_items.items():
+                if quantity > 0 and product in inventory:
+                    inventory[product]["quantity"] = max(0, inventory[product]["quantity"] - quantity)
+                    inventory[product]["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Save updated inventory
+            with open(INVENTORY_FILE, 'w') as f:
+                json.dump(inventory, f, indent=4)
+            
+            # Clear selected products from search
+            st.session_state.selected_products = []
+            
             # Display success message
             display_success_message("Bill calculated successfully!")
 
-# Add the rest of your bill operation buttons (Save, Print, Email, Export)
 # Save Bill button
 with bill_op_cols[1]:
     if st.button("Save Bill", key="save_button"):
@@ -108,6 +246,8 @@ with bill_op_cols[1]:
             display_success_message(result)
         else:
             display_error_message("Please calculate the bill first")
+
+# Print Bill button
 with bill_op_cols[2]:
     if st.button("Print Bill", key="print_button"):
         if "bill_content" in st.session_state:
@@ -118,6 +258,8 @@ with bill_op_cols[2]:
                 display_success_message(result)
         else:
             display_error_message("Please calculate the bill first")
+
+# Email Bill button
 with bill_op_cols[3]:
     if st.button("Email Bill", key="email_button", type="primary"):
         if "bill_content" in st.session_state:
@@ -125,7 +267,7 @@ with bill_op_cols[3]:
         else:
             display_error_message("Please calculate the bill first")
 
-# Add a new column for Export to Excel button
+# Export to Excel button
 with st.container():
     if st.button("Export to Excel", key="excel_button"):
         if "totals" in st.session_state:
@@ -231,8 +373,18 @@ if st.sidebar.button("New Bill"):
         del st.session_state.bill_content
     if "totals" in st.session_state:
         del st.session_state.totals
-    # Rerun the app to clear inputs
+    if "show_email_form" in st.session_state:
+        del st.session_state.show_email_form
+    # Clear selected products from search
+    st.session_state.selected_products = []
+    # Rerun the app
     st.rerun()
+
+# Add link to Product Management page
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Manage Products & Inventory")
+if st.sidebar.button("Go to Product Management"):
+    st.switch_page("pages/product_management.py")
 
 # Add this new section for email setup
 st.sidebar.markdown("---")
@@ -252,94 +404,3 @@ with st.sidebar.expander("Email Setup"):
                 st.error("Failed to save email credentials.")
         else:
             st.warning("Please fill in all fields.")
-
-
-# Add this to your imports section
-from utils.bill_operations import send_bill_pdf_to_customer
-
-# Add these imports at the top
-import tempfile
-import platform
-from pathlib import Path
-
-# Add this function to your Streamlit app
-def email_bill_section():
-    st.header("Email Bill to Customer")
-    
-    # Input fields
-    bill_number = st.text_input("Bill Number")
-    customer_email = st.text_input("Customer Email")
-    customer_name = st.text_input("Customer Name")
-    security_code = st.text_input("Security Code", type="password")
-    
-    if st.button("Send Bill"):
-        if not bill_number or not customer_email or not customer_name or not security_code:
-            st.error("Please fill in all fields")
-        else:
-            # Update the function to use security code
-            from utils.email_utils import send_bill_pdf_with_security_code
-            
-            # Path to the PDF bill - UPDATED
-            pdf_path = os.path.join(st.session_state.bills_directory, f"{bill_number}.pdf")
-            
-            # Check if PDF exists
-            if not os.path.exists(pdf_path):
-                st.error(f"Error: Bill PDF not found for {bill_number}")
-            else:
-                # Email content
-                subject = f"Your Invoice #{bill_number}"
-                message = f"""Dear {customer_name},
-
-Thank you for your purchase. Please find your invoice attached to this email.
-
-Invoice Number: {bill_number}
-Date: {datetime.datetime.now().strftime("%d-%m-%Y")}
-
-If you have any questions about this invoice, please contact our customer service.
-
-Best regards,
-Grocery Billing System
-"""
-                
-                # Send the email with PDF attachment
-                result = send_bill_pdf_with_security_code(
-                    security_code=security_code,
-                    receiver_email=customer_email,
-                    subject=subject,
-                    message=message,
-                    pdf_path=pdf_path
-                )
-                
-                if "successfully" in result:
-                    st.success(result)
-                else:
-                    st.error(result)
-
-# Add this near the top of your file, after imports
-import tempfile
-from pathlib import Path
-
-# Define a function to get the appropriate bills directory
-def get_bills_directory():
-    """Returns the appropriate directory for storing bills based on environment"""
-    # Check if we're running on Streamlit Cloud or similar service
-    if os.environ.get('STREAMLIT_SHARING') or os.environ.get('STREAMLIT_CLOUD'):
-        # Use a temporary directory for cloud deployment
-        bills_dir = Path(tempfile.gettempdir()) / "grocery_billing_bills"
-    else:
-        # For local development
-        # Try to use the original path if it exists
-        original_path = Path("d:/adv billing/bills")
-        if original_path.exists():
-            bills_dir = original_path
-        else:
-            # Create a bills directory in the current project
-            bills_dir = Path(__file__).parent / "bills"
-    
-    # Ensure the directory exists
-    os.makedirs(str(bills_dir), exist_ok=True)
-    return str(bills_dir)
-
-# Initialize the bills directory
-BILLS_DIRECTORY = get_bills_directory()
-st.session_state.bills_directory = BILLS_DIRECTORY

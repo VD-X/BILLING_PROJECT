@@ -25,7 +25,7 @@ def extract_bill_number_from_filename(filename):
 
 def get_bill_files():
     """Get list of bill files in the bills folder with metadata"""
-    bills_folder = "d:\\adv billing\\bills"
+    bills_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
     
     if not os.path.exists(bills_folder):
         st.error("Bills folder not found.")
@@ -340,7 +340,8 @@ def main():
                 
                 # Export button
                 if st.button("📊 Export to Excel", use_container_width=True):
-                    df.to_excel("d:\\adv billing\\search_results.xlsx", index=False)
+                    export_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "search_results.xlsx")
+                    df.to_excel(export_path, index=False)
                     st.success("Search results exported to Excel!")
 
 if __name__ == "__main__":

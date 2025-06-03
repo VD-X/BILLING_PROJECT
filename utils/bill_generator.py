@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from datetime import datetime
 from utils.bill_storage import save_bill_to_master
@@ -125,7 +126,10 @@ def generate_bill(items, customer_info, bill_number=None, date=None):
     bill_df = pd.DataFrame(bill_rows)
     
     # Save to individual bill file
-    bill_file_path = f"d:\\adv billing\\bills\\bill_{bill_number}_{date.strftime('%Y%m%d')}.xlsx"
+    # Save to bills directory in project root
+    bills_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
+    os.makedirs(bills_dir, exist_ok=True)
+    bill_file_path = os.path.join(bills_dir, f"bill_{bill_number}_{date.strftime('%Y%m%d')}.xlsx")
     bill_df.to_excel(bill_file_path, index=False)
     
     # Also save to the master file

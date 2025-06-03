@@ -7,29 +7,21 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-import platform
+import tempfile
 
-# Conditionally import Windows-specific modules
-if platform.system() == "Windows":
-    try:
-        import win32print
-        import win32api
-    except ImportError:
+# No need for Windows-specific modules in cloud deployment
+class DummyWin32Print:
+    @staticmethod
+    def GetDefaultPrinter():
+        return "No printer available (non-Windows environment)"
+
+class DummyWin32Api:
+    @staticmethod
+    def ShellExecute(*args, **kwargs):
         pass
-else:
-    # Create dummy modules for non-Windows environments
-    class DummyWin32Print:
-        @staticmethod
-        def GetDefaultPrinter():
-            return "No printer available (non-Windows environment)"
-    
-    class DummyWin32Api:
-        @staticmethod
-        def ShellExecute(*args, **kwargs):
-            pass
-    
-    win32print = DummyWin32Print()
-    win32api = DummyWin32Api()
+
+win32print = DummyWin32Print()
+win32api = DummyWin32Api()
 
 def generate_bill_number():
     """Generate a unique bill number based on date and random number."""
@@ -121,7 +113,7 @@ def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_i
     try:
         # Use the provided directory or default to the original path
         if bills_directory is None:
-            bills_directory = "d:\\adv billing\\bills"
+            bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
         
         # Ensure the directory exists
         os.makedirs(bills_directory, exist_ok=True)
@@ -145,7 +137,7 @@ def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_item
     try:
         # Use the provided directory or default to the original path
         if bills_directory is None:
-            bills_directory = "d:\\adv billing\\bills"
+            bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
         
         # Ensure the directory exists
         os.makedirs(bills_directory, exist_ok=True)
@@ -156,7 +148,7 @@ def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_item
         # Get the bills directory from session state or use a default
         import streamlit as st
         import tempfile  # Add this import
-        bills_directory = getattr(st.session_state, 'bills_directory', os.path.join(tempfile.gettempdir(), "grocery_billing_bills"))
+        bills_directory = getattr(st.session_state, 'bills_directory', os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills"))
         os.makedirs(bills_directory, exist_ok=True)
         
         # Create the Excel file path
@@ -228,10 +220,8 @@ def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_item
                 max_length = max(df[col].astype(str).map(len).max(), len(str(col)))
                 worksheet.column_dimensions[chr(65 + i)].width = max_length + 2
         
-        # Save to the main Excel file in the "main excel bill" folder
-        main_excel_dir = "d:\\adv billing\\main excel bill"
-        os.makedirs(main_excel_dir, exist_ok=True)
-        main_excel_file = os.path.join(main_excel_dir, "excel_bills.xlsx")
+        # Save to vdx_excel_bills.xlsx in the project root directory
+        main_excel_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "vdx_excel_bills.xlsx")
         
         # Prepare data for the main Excel file
         main_data = {
@@ -339,44 +329,7 @@ def send_bill_pdf_to_customer(customer_email, bill_number, pdf_path=None):
 
 
 def print_bill(bill_content):
-    """Print the bill to the default printer."""
-    try:
-        # Check if running on Windows
-        import platform
-        if platform.system() != "Windows":
-            return "Printing is only available on Windows systems"
-        
-        # Create a temporary file for printing
-        import tempfile
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", mode="w")
-        temp_file.write(bill_content)
-        temp_file.close()
-        
-        # Get the default printer
-        printer_name = win32print.GetDefaultPrinter()
-        
-        # Print the file
-        win32api.ShellExecute(
-            0, 
-            "print", 
-            temp_file.name, 
-            f'/d:"{printer_name}"', 
-            ".", 
-            0
-        )
-        
-        # Clean up the temporary file (after a delay to allow printing)
-        import threading
-        def delete_temp_file():
-            import time
-            time.sleep(10)  # Wait 10 seconds before deleting
-            try:
-                os.unlink(temp_file.name)
-            except:
-                pass
-        
-        threading.Thread(target=delete_temp_file).start()
-        
-        return f"Bill sent to printer: {printer_name}"
-    except Exception as e:
-        return f"Error printing bill: {str(e)}"
+    """Print functionality is not available in cloud deployment.
+    This function is maintained for compatibility but returns a message.
+    """
+    return "Printing is not available in cloud deployment. Please download the PDF and print locally."

@@ -1,0 +1,170 @@
+{
+    "Cosmetics": {
+        "Bath Soap": [
+            {
+                "name": "Dove Bath Soap",
+                "price": 45
+            },
+            {
+                "name": "Lux Bath Soap",
+                "price": 35
+            },
+            {
+                "name": "Pears Bath Soap",
+                "price": 50
+            },
+            {
+                "name": "Santoor Bath Soap",
+                "price": 30
+            }
+        ],
+        "Face Cream": [
+            {
+                "name": "Nivea Face Cream",
+                "price": 120
+            },
+            {
+                "name": "Ponds Face Cream",
+                "price": 90
+            },
+            {
+                "name": "Olay Face Cream",
+                "price": 150
+            }
+        ],
+        "Face Wash": [
+            {
+                "name": "Clean & Clear Face Wash",
+                "price": 85
+            },
+            {
+                "name": "Himalaya Face Wash",
+                "price": 70
+            },
+            {
+                "name": "Neutrogena Face Wash",
+                "price": 110
+            }
+        ],
+        "Hair Oil": [
+            {
+                "name": "Parachute Hair Oil",
+                "price": 80
+            },
+            {
+                "name": "Dabur Amla Hair Oil",
+                "price": 95
+            },
+            {
+                "name": "Bajaj Almond Hair Oil",
+                "price": 110
+            }
+        ]
+    },
+    "Groceries": {
+        "Rice": [
+            {
+                "name": "Basmati Rice",
+                "price": 80
+            },
+            {
+                "name": "Brown Rice",
+                "price": 95
+            },
+            {
+                "name": "Jasmine Rice",
+                "price": 85
+            }
+        ],
+        "Dal": [
+            {
+                "name": "Toor Dal",
+                "price": 120
+            },
+            {
+                "name": "Moong Dal",
+                "price": 110
+            },
+            {
+                "name": "Masoor Dal",
+                "price": 100
+            }
+        ],
+        "Oil": [
+            {
+                "name": "Sunflower Oil",
+                "price": 180
+            },
+            {
+                "name": "Olive Oil",
+                "price": 350
+            },
+            {
+                "name": "Mustard Oil",
+                "price": 160
+            }
+        ],
+        "Flour": [
+            {
+                "name": "Wheat Flour",
+                "price": 45
+            },
+            {
+                "name": "Besan Flour",
+                "price": 60
+            },
+            {
+                "name": "Rice Flour",
+                "price": 50
+            }
+        ]
+    },
+    "Drinks": {
+        "Energy Drinks": [
+            {
+                "name": "Red Bull",
+                "price": 110
+            },
+            {
+                "name": "Monster",
+                "price": 120
+            },
+            {
+                "name": "Sting",
+                "price": 85
+            }
+        ],
+        "Soft Drinks": [
+            {
+                "name": "Coca Cola",
+                "price": 40
+            },
+            {
+                "name": "Pepsi",
+                "price": 40
+            },
+            {
+                "name": "Sprite",
+                "price": 38
+            },
+            {
+                "name": "Fanta",
+                "price": 38
+            }
+        ],
+        "Juices": [
+            {
+                "name": "Real Fruit Juice",
+                "price": 95
+            },
+            {
+                "name": "Tropicana",
+                "price": 90
+            },
+            {
+                "name": "Minute Maid",
+                "price": 85
+            }
+        ]
+    }
+}

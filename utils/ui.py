@@ -48,8 +48,8 @@ def display_customer_info_section():
     
     return customer_name, phone_number
 
-def display_product_selection(cosmetic_products, grocery_products, drink_products, prices):
-    """Display product selection section with variants"""
+def display_product_selection(cosmetic_products, grocery_products, drink_products, prices, inventory=None):
+    """Display product selection section with variants and inventory awareness"""
     st.markdown('<div class="section-header">Product Selection</div>', unsafe_allow_html=True)
     
     # Create tabs for different product categories
@@ -75,13 +75,38 @@ def display_product_selection(cosmetic_products, grocery_products, drink_product
                     with cols[i]:
                         st.markdown(f"**{variant['name']}**")
                         st.markdown(f"Price: ₹{variant['price']}")
-                        qty = st.number_input(
-                            "Quantity",
-                            min_value=0,
-                            value=0,
-                            step=1,
-                            key=f"cosmetic_{variant['name']}"
-                        )
+                        
+                        # Check inventory if available
+                        stock = 999  # Default high value if inventory not provided
+                        if inventory and variant['name'] in inventory:
+                            stock = inventory[variant['name']]['quantity']
+                            st.markdown(f"Stock: {stock}")
+                            
+                            # Show out of stock message
+                            if stock <= 0:
+                                st.markdown("<span style='color:red'>Out of Stock</span>", unsafe_allow_html=True)
+                        
+                        # Disable number input if out of stock
+                        if inventory and variant['name'] in inventory and inventory[variant['name']]['quantity'] <= 0:
+                            qty = st.number_input(
+                                "Quantity",
+                                min_value=0,
+                                max_value=0,  # Force max to 0 for out of stock
+                                value=0,
+                                step=1,
+                                key=f"cosmetic_{variant['name']}",
+                                disabled=True
+                            )
+                        else:
+                            max_val = stock if inventory and variant['name'] in inventory else None
+                            qty = st.number_input(
+                                "Quantity",
+                                min_value=0,
+                                max_value=max_val,
+                                value=0,
+                                step=1,
+                                key=f"cosmetic_{variant['name']}"
+                            )
                         cosmetic_items[variant['name']] = qty
     
     # Groceries tab
@@ -99,13 +124,38 @@ def display_product_selection(cosmetic_products, grocery_products, drink_product
                     with cols[i]:
                         st.markdown(f"**{variant['name']}**")
                         st.markdown(f"Price: ₹{variant['price']}")
-                        qty = st.number_input(
-                            "Quantity",
-                            min_value=0,
-                            value=0,
-                            step=1,
-                            key=f"grocery_{variant['name']}"
-                        )
+                        
+                        # Check inventory if available
+                        stock = 999  # Default high value if inventory not provided
+                        if inventory and variant['name'] in inventory:
+                            stock = inventory[variant['name']]['quantity']
+                            st.markdown(f"Stock: {stock}")
+                            
+                            # Show out of stock message
+                            if stock <= 0:
+                                st.markdown("<span style='color:red'>Out of Stock</span>", unsafe_allow_html=True)
+                        
+                        # Disable number input if out of stock
+                        if inventory and variant['name'] in inventory and inventory[variant['name']]['quantity'] <= 0:
+                            qty = st.number_input(
+                                "Quantity",
+                                min_value=0,
+                                max_value=0,  # Force max to 0 for out of stock
+                                value=0,
+                                step=1,
+                                key=f"grocery_{variant['name']}",
+                                disabled=True
+                            )
+                        else:
+                            max_val = stock if inventory and variant['name'] in inventory else None
+                            qty = st.number_input(
+                                "Quantity",
+                                min_value=0,
+                                max_value=max_val,
+                                value=0,
+                                step=1,
+                                key=f"grocery_{variant['name']}"
+                            )
                         grocery_items[variant['name']] = qty
     
     # Drinks tab
@@ -123,13 +173,38 @@ def display_product_selection(cosmetic_products, grocery_products, drink_product
                     with cols[i]:
                         st.markdown(f"**{variant['name']}**")
                         st.markdown(f"Price: ₹{variant['price']}")
-                        qty = st.number_input(
-                            "Quantity",
-                            min_value=0,
-                            value=0,
-                            step=1,
-                            key=f"drink_{variant['name']}"
-                        )
+                        
+                        # Check inventory if available
+                        stock = 999  # Default high value if inventory not provided
+                        if inventory and variant['name'] in inventory:
+                            stock = inventory[variant['name']]['quantity']
+                            st.markdown(f"Stock: {stock}")
+                            
+                            # Show out of stock message
+                            if stock <= 0:
+                                st.markdown("<span style='color:red'>Out of Stock</span>", unsafe_allow_html=True)
+                        
+                        # Disable number input if out of stock
+                        if inventory and variant['name'] in inventory and inventory[variant['name']]['quantity'] <= 0:
+                            qty = st.number_input(
+                                "Quantity",
+                                min_value=0,
+                                max_value=0,  # Force max to 0 for out of stock
+                                value=0,
+                                step=1,
+                                key=f"drink_{variant['name']}",
+                                disabled=True
+                            )
+                        else:
+                            max_val = stock if inventory and variant['name'] in inventory else None
+                            qty = st.number_input(
+                                "Quantity",
+                                min_value=0,
+                                max_value=max_val,
+                                value=0,
+                                step=1,
+                                key=f"drink_{variant['name']}"
+                            )
                         drink_items[variant['name']] = qty
     
     return cosmetic_items, grocery_items, drink_items
