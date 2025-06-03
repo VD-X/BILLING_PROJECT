@@ -90,21 +90,30 @@ def display_pdf(pdf_path):
         </div>
         """, unsafe_allow_html=True)
         
-        # Use Streamlit's built-in PDF display capability
+        # Read PDF file
         with open(pdf_path, "rb") as file:
-            pdf_bytes = file.read()
+            pdf_bytes = base64.b64encode(file.read()).decode('utf-8')
         
-        # Display PDF using Streamlit's PDF display
-        st.download_button(
-            label="📥 Download PDF",
-            data=pdf_bytes,
-            file_name=os.path.basename(pdf_path),
-            mime="application/pdf",
-        )
+        # Create a download button for the PDF
+        with open(pdf_path, "rb") as file:
+            st.download_button(
+                label="📥 Download PDF",
+                data=file,
+                file_name=os.path.basename(pdf_path),
+                mime="application/pdf",
+            )
         
-        # Display PDF directly using Streamlit
+        # Display PDF Preview header
         st.write("### PDF Preview")
-        st.pdf(pdf_bytes, width=700, height=800)
+        
+        # Display PDF using HTML object tag which is more compatible with browsers
+        pdf_display = f"""
+        <object data="data:application/pdf;base64,{pdf_bytes}" type="application/pdf" width="100%" height="800px">
+            <p>It appears you don't have a PDF plugin for this browser. You can 
+            <a href="data:application/pdf;base64,{pdf_bytes}">click here to download the PDF</a>.</p>
+        </object>
+        """
+        st.markdown(pdf_display, unsafe_allow_html=True)
         
         # Add spacing
         st.markdown("<div style='height: 20px'></div>", unsafe_allow_html=True)
