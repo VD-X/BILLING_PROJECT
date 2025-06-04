@@ -248,8 +248,13 @@ with tabs[2]:
                         add_qty = st.number_input("Quantity to Add", min_value=1, step=1, value=1)
                         new_qty = current_qty + add_qty
                     else:  # Remove Stock
-                        remove_qty = st.number_input("Quantity to Remove", min_value=1, max_value=current_qty, step=1, value=1)
-                        new_qty = current_qty - remove_qty
+                        if current_qty <= 0:
+                            st.warning("No stock to remove.")
+                            remove_qty = 0
+                            new_qty = 0
+                        else:
+                            remove_qty = st.number_input("Quantity to Remove", min_value=1, max_value=current_qty, step=1, value=1)
+                            new_qty = current_qty - remove_qty
                     
                     submitted = st.form_submit_button("Update Inventory")
                     
