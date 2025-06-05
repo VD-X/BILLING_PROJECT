@@ -295,7 +295,7 @@ def main():
                 else:
                     amount_range = st.slider(
                         "💰 Amount Range (₹)",
-                        min_value=0.0,
+                        min_value=float(min_amount),
                         max_value=slider_max,
                         value=(float(min_amount), float(max_amount)),
                         step=10.0,
