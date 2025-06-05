@@ -285,6 +285,8 @@ def main():
             if bill_amounts:
                 min_amount = min(bill_amounts)
                 max_amount = max(bill_amounts)
+                DEFAULT_MAX = 100000.0  # You can raise this if you expect even higher bills
+                slider_max = max(max_amount, DEFAULT_MAX)
                 
                 # Fix for when min and max are the same
                 if min_amount == max_amount:
@@ -294,9 +296,10 @@ def main():
                     amount_range = st.slider(
                         "💰 Amount Range (₹)",
                         min_value=float(min_amount),
-                        max_value=float(max_amount),
+                        max_value=slider_max,
                         value=(float(min_amount), float(max_amount)),
-                        step=10.0
+                        step=10.0,
+                        help=f"You can search up to ₹{slider_max:,.2f}. If you expect even higher bills, increase DEFAULT_MAX in the code."
                     )
             else:
                 amount_range = None
