@@ -323,8 +323,8 @@ Grocery Billing System
 """
                         
                         # Send the email with PDF attachment
-                    # PDF email sending is currently disabled.
-                    display_error_message("PDF email sending is currently disabled in this deployment. Please contact admin if you need this feature.")
+                        # PDF email sending is currently disabled.
+                        display_error_message("PDF email sending is currently disabled in this deployment. Please contact admin if you need this feature.")
                 except Exception as e:
                     display_error_message(f"Error sending email: {str(e)}")
             else:
