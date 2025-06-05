@@ -264,8 +264,33 @@ with bill_op_cols[1]:
                 prices,
                 bills_directory=bills_directory
             )
-            # Only save TXT file now
-            display_success_message(result_txt)
+            # Save PDF file
+            try:
+                from utils.pdf_operations import save_bill_to_pdf
+                result_pdf = save_bill_to_pdf(
+                    st.session_state.bill_content,
+                    st.session_state.billnumber,
+                    bills_directory=bills_directory,
+                    customer_name=customer_name,
+                    phone_number=phone_number,
+                    cosmetic_items=cosmetic_items,
+                    grocery_items=grocery_items,
+                    drink_items=drink_items,
+                    totals=st.session_state.totals,
+                    prices=prices
+                )
+                display_success_message(result_txt)
+                display_success_message(f"PDF save result: {result_pdf}")
+                # Check if PDF was actually created
+                pdf_path = os.path.join(bills_directory, f"{st.session_state.billnumber}.pdf")
+                import os
+                if os.path.exists(pdf_path):
+                    display_success_message(f"PDF file exists at: {pdf_path}")
+                else:
+                    st.warning(f"PDF file was NOT created at: {pdf_path}")
+            except Exception as e:
+                display_success_message(result_txt)
+                display_error_message(f"Error saving PDF: {e}")
         else:
             display_error_message("Please calculate the bill first")
 
