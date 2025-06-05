@@ -19,7 +19,7 @@ from utils.bill_operations import (
     print_bill, 
     export_bill_to_excel
 )
-from utils.pdf_operations import extract_pdf_text  # PDF saving disabled
+from utils.pdf_operations import extract_pdf_text, save_bill_to_pdf
 from utils.email_utils import send_email
 from utils.data import prices as default_prices, cosmetic_products as default_cosmetic_products, grocery_products as default_grocery_products, drink_products as default_drink_products
 from utils.ui import (
@@ -98,13 +98,6 @@ def load_prices():
 
 # Define a function to get the appropriate bills directory
 def get_bills_directory():
-    bills_dir = os.path.join(os.getcwd(), "saved_bills")
-    try:
-        import streamlit as st
-        st.warning(f"[DEBUG] Bills directory resolved to: {bills_dir}")
-    except Exception:
-        print(f"[DEBUG] Bills directory resolved to: {bills_dir}")
-    return bills_dir
     """Returns the appropriate directory for storing bills based on environment"""
     # Always use a temporary directory for Streamlit Cloud compatibility
     bills_dir = Path(tempfile.gettempdir()) / "grocery_billing_bills"
@@ -243,9 +236,8 @@ with bill_op_cols[1]:
                 drink_items,
                 st.session_state.totals,
                 prices,
-                bills_directory=st.session_state.bills_directory
+                bills_directory=st.session_state.bills_directory  # Pass the directory
             )
-            st.warning(f"[DEBUG] Bill saved to: {st.session_state.bills_directory}")
             display_success_message(result)
         else:
             display_error_message("Please calculate the bill first")
@@ -307,9 +299,22 @@ if "show_email_form" in st.session_state and st.session_state.show_email_form:
             if security_code and receiver_email:
                 try:
                     # Path to the PDF bill - UPDATED
-                    # PDF email sending disabled. No PDF will be attached.
-                    subject = f"Your Invoice #{st.session_state.billnumber}"
-                    message = f"""Dear {customer_name},
+                    pdf_path = os.path.join(st.session_state.bills_directory, f"{st.session_state.billnumber}.pdf")
+                    
+                    # Check if PDF exists
+                    if not os.path.exists(pdf_path):
+                        # Try to save the bill to PDF first if it doesn't exist
+                        save_bill_to_pdf(
+                            st.session_state.bill_content,
+                            st.session_state.billnumber,
+                            bills_directory=st.session_state.bills_directory  # Pass the directory
+                        )
+                    
+                    # Check again if PDF exists after trying to save
+                    if os.path.exists(pdf_path):
+                        # Email content
+                        subject = f"Your Invoice #{st.session_state.billnumber}"
+                        message = f"""Dear {customer_name},
 
 Thank you for your purchase. Please find your invoice attached to this email.
 
