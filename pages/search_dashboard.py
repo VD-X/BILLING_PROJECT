@@ -25,14 +25,14 @@ def extract_bill_number_from_filename(filename):
 
 def get_bill_files():
     """Get list of bill files in the bills folder with metadata"""
-    bills_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
-    
+    bills_folder = os.path.join(os.getcwd(), "saved_bills")
+    st.warning(f"Searching TXT in: {bills_folder}")
     if not os.path.exists(bills_folder):
         st.error("Bills folder not found.")
         return []
     
     bill_files = []
-    for file in glob.glob(os.path.join(bills_folder, "*.pdf")):
+    for file in glob.glob(os.path.join(bills_folder, "*.txt")):
         filename = os.path.basename(file)
         bill_number = extract_bill_number_from_filename(filename)
         
