@@ -249,8 +249,7 @@ with bill_op_cols[0]:
 with bill_op_cols[1]:
     if st.button("Save Bill", key="save_button"):
         if "bill_content" in st.session_state:
-            # Save TXT file
-            result_txt = save_bill(
+            result = save_bill(
                 st.session_state.bill_content,
                 st.session_state.billnumber,
                 customer_name,
@@ -262,10 +261,15 @@ with bill_op_cols[1]:
                 prices,
                 bills_directory=st.session_state.bills_directory  # Pass the directory
             )
-            # Save PDF file
+            display_success_message(result)
+        else:
+            display_error_message("Please calculate the bill first")
+    # --- Save as PDF Button ---
+    if "bill_content" in st.session_state:
+        if st.button("Save as PDF", key="save_pdf_button"):
             try:
                 from utils.pdf_operations import save_bill_to_pdf
-                result_pdf = save_bill_to_pdf(
+                save_bill_to_pdf(
                     st.session_state.bill_content,
                     st.session_state.billnumber,
                     bills_directory=st.session_state.bills_directory,
@@ -277,13 +281,9 @@ with bill_op_cols[1]:
                     totals=st.session_state.totals,
                     prices=prices
                 )
-                display_success_message(result_txt)
-                display_success_message(result_pdf)
+                display_success_message(f"PDF saved as {os.path.join(st.session_state.bills_directory, f'{st.session_state.billnumber}.pdf')}")
             except Exception as e:
-                display_success_message(result_txt)
                 display_error_message(f"Error saving PDF: {e}")
-        else:
-            display_error_message("Please calculate the bill first")
 
 # Print Bill button
 with bill_op_cols[2]:
