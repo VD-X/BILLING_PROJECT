@@ -267,6 +267,10 @@ with bill_op_cols[1]:
             # Save PDF file
             try:
                 from utils.pdf_operations import save_bill_to_pdf
+                pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_bills")
+                os.makedirs(pdf_dir, exist_ok=True)
+                pdf_path = os.path.join(pdf_dir, f"{st.session_state.billnumber}.pdf")
+                display_success_message(f"Attempting to save PDF to: {pdf_path}")
                 result_pdf = save_bill_to_pdf(
                     st.session_state.bill_content,
                     st.session_state.billnumber,
@@ -282,7 +286,6 @@ with bill_op_cols[1]:
                 display_success_message(result_txt)
                 display_success_message(f"PDF save result: {result_pdf}")
                 # Check if PDF was actually created
-                pdf_path = os.path.join(bills_directory, f"{st.session_state.billnumber}.pdf")
                 import os
                 if os.path.exists(pdf_path):
                     display_success_message(f"PDF file exists at: {pdf_path}")
