@@ -231,7 +231,10 @@ with bill_op_cols[0]:
 with bill_op_cols[1]:
     if st.button("Save Bill", key="save_button"):
         if "bill_content" in st.session_state:
-            result = save_bill(
+            # Save TXT file
+            bills_directory = os.path.join(os.getcwd(), "saved_bills")
+            os.makedirs(bills_directory, exist_ok=True)
+            result_txt = save_bill(
                 st.session_state.bill_content,
                 st.session_state.billnumber,
                 customer_name,
@@ -241,9 +244,10 @@ with bill_op_cols[1]:
                 drink_items,
                 st.session_state.totals,
                 prices,
-                bills_directory=st.session_state.bills_directory  # Pass the directory
+                bills_directory=bills_directory
             )
-            display_success_message(result)
+            # Only save TXT file now
+            display_success_message(result_txt)
         else:
             display_error_message("Please calculate the bill first")
 
