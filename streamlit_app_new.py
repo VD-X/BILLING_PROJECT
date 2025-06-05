@@ -323,8 +323,22 @@ Grocery Billing System
 """
                         
                         # Send the email with PDF attachment
-                        # PDF email sending is currently disabled.
-                        display_error_message("PDF email sending is currently disabled in this deployment. Please contact admin if you need this feature.")
+                        from utils.email_utils import send_bill_pdf_with_security_code
+                        result = send_bill_pdf_with_security_code(
+                            security_code=security_code,
+                            receiver_email=receiver_email,
+                            subject=subject,
+                            message=message,
+                            pdf_path=pdf_path
+                        )
+                        
+                        if "successfully" in result:
+                            display_success_message(result)
+                            st.session_state.show_email_form = False
+                        else:
+                            display_error_message(result)
+                    else:
+                        display_error_message("Could not create PDF bill. Please save the bill first.")
                 except Exception as e:
                     display_error_message(f"Error sending email: {str(e)}")
             else:
