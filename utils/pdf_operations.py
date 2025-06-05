@@ -11,9 +11,10 @@ from PyPDF2 import PdfReader
 def save_bill_to_pdf(bill_content, bill_number, bills_directory=None, customer_name=None, phone_number=None, 
                     cosmetic_items=None, grocery_items=None, drink_items=None, totals=None, prices=None):
     """Save bill content to a PDF file."""
-    # Always use local 'saved_bills' directory for PDFs
+    # Always use temporary directory for Streamlit Cloud compatibility
     if bills_directory is None:
-        bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
+        import tempfile
+        bills_directory = os.path.join(tempfile.gettempdir(), "grocery_billing_bills")
     
     # Ensure the directory exists
     os.makedirs(bills_directory, exist_ok=True)
