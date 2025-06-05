@@ -99,11 +99,6 @@ def load_prices():
 # Define a function to get the appropriate bills directory
 def get_bills_directory():
     bills_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_bills")
-    try:
-        import streamlit as st
-        st.warning(f"Bills directory resolved to: {bills_dir}")
-    except Exception:
-        print(f"Bills directory resolved to: {bills_dir}")
     return bills_dir
 
 # Initialize the bills directory
