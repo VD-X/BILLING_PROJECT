@@ -209,25 +209,7 @@ with bill_op_cols[0]:
                 prices
             )
             st.session_state.bill_content = bill_content
-
-            # --- Automatically save PDF to saved_bills ---
-            try:
-                from utils.pdf_operations import save_bill_to_pdf
-                save_bill_to_pdf(
-                    bill_content,
-                    st.session_state.billnumber,
-                    bills_directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_bills"),
-                    customer_name=customer_name,
-                    phone_number=phone_number,
-                    cosmetic_items=cosmetic_items,
-                    grocery_items=grocery_items,
-                    drink_items=drink_items,
-                    totals=totals,
-                    prices=prices
-                )
-            except Exception as e:
-                display_error_message(f"Error auto-saving PDF: {e}")
-
+            
             # Update inventory after bill calculation
             all_items = {**cosmetic_items, **grocery_items, **drink_items}
             for product, quantity in all_items.items():
