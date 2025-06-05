@@ -230,8 +230,7 @@ with bill_op_cols[1]:
                 grocery_items,
                 drink_items,
                 st.session_state.totals,
-                prices,
-                bills_directory=st.session_state.bills_directory  # Pass the directory
+                prices
             )
             display_success_message(result)
         else:
