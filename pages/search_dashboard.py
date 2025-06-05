@@ -32,34 +32,28 @@ def get_bill_files():
         return []
     
     bill_files = []
-    for file in glob.glob(os.path.join(bills_folder, "*.pdf")):
+    for file in glob.glob(os.path.join(bills_folder, "*.txt")):
         filename = os.path.basename(file)
         bill_number = extract_bill_number_from_filename(filename)
-        
+
         created_time = os.path.getctime(file)
         modified_time = os.path.getmtime(file)
-        size_bytes = os.path.getsize(file)
-        size_kb = size_bytes / 1024
-        
-        # Try to find corresponding TXT file for metadata
-        txt_file = file.replace('.pdf', '.txt')
+        size_kb = os.path.getsize(file) / 1024
         customer_name = None
         total_amount = None
-        
-        if os.path.exists(txt_file):
-            try:
-                with open(txt_file, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    customer_match = re.search(r'Customer Name: (.+)', content)
-                    if customer_match:
-                        customer_name = customer_match.group(1).strip()
-                    
-                    total_match = re.search(r'Total:\s+(\d+\.\d+)', content)
-                    if total_match:
-                        total_amount = float(total_match.group(1))
-            except Exception:
-                pass
-        
+        try:
+            with open(file, "r", encoding="utf-8") as f:
+                text = f.read()
+                # Extract customer name and total amount from txt
+                name_match = re.search(r"Customer Name:\s*(.*)", text)
+                total_match = re.search(r"Total:\s*₹?([\d,.]+)", text)
+                if name_match:
+                    customer_name = name_match.group(1).strip()
+                if total_match:
+                    total_amount = float(total_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
         bill_files.append({
             'filename': filename,
             'bill_number': bill_number,
