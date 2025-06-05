@@ -213,8 +213,7 @@ with bill_op_cols[0]:
             # --- Automatically save PDF to saved_bills ---
             try:
                 from utils.pdf_operations import save_bill_to_pdf
-                # PDF export disabled
-# save_bill_to_pdf(
+                save_bill_to_pdf(
                     bill_content,
                     st.session_state.billnumber,
                     bills_directory=os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_bills"),
@@ -332,8 +331,7 @@ if "show_email_form" in st.session_state and st.session_state.show_email_form:
                     # Check if PDF exists
                     if not os.path.exists(pdf_path):
                         # Try to save the bill to PDF first if it doesn't exist
-                        # PDF export disabled
-# save_bill_to_pdf(
+                        save_bill_to_pdf(
                             st.session_state.bill_content,
                             st.session_state.billnumber,
                             bills_directory=st.session_state.bills_directory  # Pass the directory
