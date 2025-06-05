@@ -14,9 +14,9 @@ def save_bill_to_pdf(bill_content, bill_number, bills_directory=None, customer_n
     import streamlit as st
     import os
     st.warning(f"save_bill_to_pdf called! Current working directory: {os.getcwd()}")
-    # Always use provided directory, or default to project 'saved_bills' in current working dir
+    # Always use local 'saved_bills' directory for PDFs
     if bills_directory is None:
-        bills_directory = os.path.join(os.getcwd(), "saved_bills")
+        bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
     st.warning(f"Resolved bills_directory: {bills_directory}")
     # Ensure the directory exists
     os.makedirs(bills_directory, exist_ok=True)
