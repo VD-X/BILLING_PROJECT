@@ -107,13 +107,11 @@ def generate_bill(customer_name, phone_number, bill_number, cosmetic_items, groc
     
     return "\n".join(bill)
 
-# Update the save_bill function to accept a bills_directory parameter
-def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_items, grocery_items, drink_items, totals, prices, bills_directory=None):
-    """Save bill to a text file and PDF"""
+def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_items, grocery_items, drink_items, totals, prices):
+    """Save bill to a text file"""
     try:
-        # Use the provided directory or default to the original path
-        if bills_directory is None:
-            bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
+        # Use the original path
+        bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
         
         # Ensure the directory exists
         os.makedirs(bills_directory, exist_ok=True)
@@ -123,16 +121,11 @@ def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_i
         with open(txt_path, "w") as f:
             f.write(bill_content)
         
-        # Save as PDF
-        from utils.pdf_operations import save_bill_to_pdf
-        save_bill_to_pdf(bill_content, bill_number, bills_directory)
-        
         return f"Bill saved successfully as {txt_path}"
     except Exception as e:
         return f"Error saving bill: {str(e)}"
 
-# Update the export_bill_to_excel function similarly
-def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_items, grocery_items, drink_items, totals, prices, bills_directory=None):
+def export_bill_to_excel(customer_name, phone_number, bill_number, cosmetic_items, grocery_items, drink_items, totals, prices):
     """Export bill to Excel file"""
     try:
         # Use the provided directory or default to the original path
