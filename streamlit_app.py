@@ -265,10 +265,12 @@ with bill_op_cols[1]:
             # Save PDF file
             try:
                 from utils.pdf_operations import save_bill_to_pdf
+                pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_bills")
+                os.makedirs(pdf_dir, exist_ok=True)
                 result_pdf = save_bill_to_pdf(
                     st.session_state.bill_content,
                     st.session_state.billnumber,
-                    bills_directory=st.session_state.bills_directory,
+                    bills_directory=pdf_dir,
                     customer_name=customer_name,
                     phone_number=phone_number,
                     cosmetic_items=cosmetic_items,
@@ -278,7 +280,7 @@ with bill_op_cols[1]:
                     prices=prices
                 )
                 display_success_message(result_txt)
-                display_success_message(result_pdf)
+                display_success_message(f"PDF save result: {result_pdf}")
             except Exception as e:
                 display_success_message(result_txt)
                 display_error_message(f"Error saving PDF: {e}")
