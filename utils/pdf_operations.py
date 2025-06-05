@@ -11,18 +11,16 @@ from PyPDF2 import PdfReader
 def save_bill_to_pdf(bill_content, bill_number, bills_directory=None, customer_name=None, phone_number=None, 
                     cosmetic_items=None, grocery_items=None, drink_items=None, totals=None, prices=None):
     """Save bill content to a PDF file."""
-    import streamlit as st
-    import os
-    st.warning(f"save_bill_to_pdf called! Current working directory: {os.getcwd()}")
     # Always use local 'saved_bills' directory for PDFs
     if bills_directory is None:
         bills_directory = os.path.join(os.path.dirname(os.path.dirname(__file__)), "saved_bills")
-    st.warning(f"Resolved bills_directory: {bills_directory}")
+    
     # Ensure the directory exists
     os.makedirs(bills_directory, exist_ok=True)
+    
     # Create the PDF file path
     pdf_path = os.path.join(bills_directory, f"{bill_number}.pdf")
-    st.warning(f"Attempting to save PDF at: {pdf_path}")
+    
     try:
         # Create a PDF document
         doc = SimpleDocTemplate(
