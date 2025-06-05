@@ -98,12 +98,12 @@ def load_prices():
 
 # Define a function to get the appropriate bills directory
 def get_bills_directory():
-    bills_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saved_bills")
+    bills_dir = os.path.join(os.getcwd(), "saved_bills")
     try:
         import streamlit as st
-        st.warning(f"[FIXED] Bills directory resolved to: {bills_dir}")
+        st.warning(f"[DEBUG] Bills directory resolved to: {bills_dir}")
     except Exception:
-        print(f"[FIXED] Bills directory resolved to: {bills_dir}")
+        print(f"[DEBUG] Bills directory resolved to: {bills_dir}")
     return bills_dir
     """Returns the appropriate directory for storing bills based on environment"""
     # Always use a temporary directory for Streamlit Cloud compatibility
