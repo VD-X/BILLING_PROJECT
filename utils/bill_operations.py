@@ -123,7 +123,10 @@ def save_bill(bill_content, bill_number, customer_name, phone_number, cosmetic_i
         with open(txt_path, "w") as f:
             f.write(bill_content)
         
-
+        # Save as PDF
+        from utils.pdf_operations import save_bill_to_pdf
+        save_bill_to_pdf(bill_content, bill_number, bills_directory)
+        
         return f"Bill saved successfully as {txt_path}"
     except Exception as e:
         return f"Error saving bill: {str(e)}"
