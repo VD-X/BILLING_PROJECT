@@ -250,6 +250,8 @@ with bill_op_cols[1]:
     if st.button("Save Bill", key="save_button"):
         if "bill_content" in st.session_state:
             # Save TXT file
+            bills_directory = os.path.join(os.getcwd(), "saved_bills")
+            os.makedirs(bills_directory, exist_ok=True)
             result_txt = save_bill(
                 st.session_state.bill_content,
                 st.session_state.billnumber,
@@ -260,7 +262,7 @@ with bill_op_cols[1]:
                 drink_items,
                 st.session_state.totals,
                 prices,
-                bills_directory=st.session_state.bills_directory  # Pass the directory
+                bills_directory=bills_directory
             )
             # Save PDF file
             try:
@@ -272,7 +274,7 @@ with bill_op_cols[1]:
                 result_pdf = save_bill_to_pdf(
                     st.session_state.bill_content,
                     st.session_state.billnumber,
-                    bills_directory=pdf_dir,
+                    bills_directory=bills_directory,
                     customer_name=customer_name,
                     phone_number=phone_number,
                     cosmetic_items=cosmetic_items,
